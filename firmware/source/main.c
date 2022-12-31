@@ -30,6 +30,9 @@ void LCD_GoTo(uint8_t row, uint8_t column); // Move cursor to X, Y
 unsigned char reverse(unsigned char b); // Get bits in reversed order
 
 int main(void) {
+	// Remove CLKDIV8
+	CLKPR = 0x80;
+	CLKPR = 0x00;
 	// Disable JTAG
 	MCUCR = (1<<JTD);
 	MCUCR = (1<<JTD);
@@ -62,7 +65,7 @@ void LCD_EnablePulse() {
 }
 
 void LCD_SendCommand(char command) {
-	command = reverse(command); // Command bits in reverse order
+	// command = reverse(command); // Command bits in reverse order
 	// First 6 LCD data pins are on Port D
 	if ((command >> 0) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_0); // Set bit 1
@@ -120,7 +123,7 @@ void LCD_ClearDisplay() {
 }
 
 void LCD_DisplayChar(uint8_t data) {
-	data = reverse(data); // Data bits in reverse order
+	// data = reverse(data); // Data bits in reverse order
 	// First 6 LCD data pins are on Port D
 	if ((data >> 0) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_0); // Set bit 1

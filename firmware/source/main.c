@@ -46,7 +46,7 @@ void LCD_Init() {
 	// Last 2 LCD data pins are on Port B
 	DDRB = (1<<LCD_DATA_PIN_6)|(1<<LCD_DATA_PIN_7); // Set LCD Data pins DDR output
 	
-	DDRE = (1<<LCD_EN)|(1<<LCD_RS)|(1<<LCD_RW); // Set EN & RS & RW DDR output
+	DDRF = (1<<LCD_EN)|(1<<LCD_RS)|(1<<LCD_RW); // Set EN & RS & RW DDR output
 	_delay_ms(40); // LCD power ON delay >40ms
 	LCD_SendCommand(LCD_CMD_2_LINES_8_BIT_MODE); // 2 lines, 8-bit mode
 	LCD_SendCommand(LCD_CMD_DISPLAY_ON_CURSOR_OFF); // Display ON, Cursor OFF
@@ -62,7 +62,7 @@ void LCD_EnablePulse() {
 }
 
 void LCD_SendCommand(char command) {
-	// command = reverse(command); // Command bits in reverse order
+	command = reverse(command); // Command bits in reverse order
 	// First 6 LCD data pins are on Port D
 	if ((command >> 0) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_0); // Set bit 1
@@ -120,7 +120,7 @@ void LCD_ClearDisplay() {
 }
 
 void LCD_DisplayChar(uint8_t data) {
-	// data = reverse(data); // Data bits in reverse order
+	data = reverse(data); // Data bits in reverse order
 	// First 6 LCD data pins are on Port D
 	if ((data >> 0) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_0); // Set bit 1

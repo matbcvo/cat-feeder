@@ -53,7 +53,10 @@ int main(void) {
 	TimerCounter4_Init(); // Initialize Timer/Counter4
 	
 	LCD_ClearDisplay(); // Clear LCD display
+	LCD_GoTo(1, 1);
 	LCD_DisplayString((uint8_t *)"Cat Feeder");
+	LCD_GoTo(2, 1);
+	LCD_DisplayString((uint8_t *)"Starting...");
 	
 	while (1) {
 		OCR4A = motor_duty_cycle;

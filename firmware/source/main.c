@@ -233,7 +233,7 @@ unsigned char reverse(unsigned char b) {
 	return b;
 }
 
-void TimerCounter1_Init() {
+void TimerCounter4_Init() {
         // Timer 10-bit Fast PWM operation mode
         // Compare Output Mode (Clear on match, set TOP), Waveform Generation Mode (Fast PWM) 
         TCCR4A = (0<<COM4A1)|(1<<COM4A0)|(1<<PWM4A);

@@ -19,6 +19,13 @@
 #define LCD_CMD_CLEAR_DISPLAY 0b00000001 // Clear LCD display
 #define LCD_CMD_CURSOR_INCREMENT 0b00000110 // Cursor increment
 #define LCD_CMD_CURSOR_LOCATION 0b10000000 // addr location 0 + cursor 0th pos
+/*
+32 - 13% duty cycle
+64 - 25% duty cycle
+128 - 50% duty cycle
+192 - 75% duty cycle
+*/
+#define DEFAULT_MOTOR_DUTY_CYCLE 16
 
 void LCD_Init(); // Initialize LCD
 void LCD_EnablePulse(); // Enable Pulse, latch data into register
@@ -28,6 +35,9 @@ void LCD_DisplayChar(uint8_t data); // Display char on LCD
 void LCD_DisplayString(uint8_t *data); // Display string on LCD
 void LCD_GoTo(uint8_t row, uint8_t column); // Move cursor to X, Y
 unsigned char reverse(unsigned char b); // Get bits in reversed order
+void TimerCounter4_Init();
+
+volatile uint16_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
 
 int main(void) {
 	// Remove CLKDIV8
@@ -36,8 +46,21 @@ int main(void) {
 	// Disable JTAG
 	MCUCR = (1<<JTD);
 	MCUCR = (1<<JTD);
-	LCD_Init(); // Initialize LCD	
+	LCD_Init(); // Initialize LCD
+	TimerCounter4_Init(); // Initialize Timer/Counter4
 	while (1) {
+		OCR4A = motor_duty_cycle;
+		if ((PINE & (1 << PE6))) { // Turn motor driving off
+                        // DDRC = (0<<PC6);
+                        motor_duty_cycle = 0;
+                        TCCR4B = (0 << CS40); // Disable timer
+                }
+                else if ((PINF & (1 << PF7))) { // Turn motor driving on
+                        // DDRC = (1<<PC6);
+                        motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
+                        TCCR4B = (1 << CS40); // Enable timer
+                }
+
 		LCD_ClearDisplay(); // Clear LCD display
 		LCD_DisplayString((uint8_t *)"Cat Feeder");
 	}
@@ -206,3 +229,13 @@ unsigned char reverse(unsigned char b) {
 	b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
 	return b;
 }
+
+void TimerCounter1_Init() {
+        // Timer 10-bit Fast PWM töörežiimiga
+        // Compare Output Mode (Clear on match, set TOP), Waveform Generation Mode (Fast PWM) 
+        TCCR4A = (0<<COM4A1)|(1<<COM4A0)|(1<<PWM4A);
+        // Waveform Generation Mode (Fast PWM), No prescaling
+        TCCR4D = (0 << WGM40);
+        TCCR4B = (1<<CS40);
+}
+

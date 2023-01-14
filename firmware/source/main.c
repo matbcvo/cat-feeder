@@ -51,6 +51,10 @@ int main(void) {
 	
 	LCD_Init(); // Initialize LCD
 	TimerCounter4_Init(); // Initialize Timer/Counter4
+	
+	LCD_ClearDisplay(); // Clear LCD display
+	LCD_DisplayString((uint8_t *)"Cat Feeder");
+	
 	while (1) {
 		OCR4A = motor_duty_cycle;
 		if ((PINE & (1 << PE6))) { // Turn motor driving off
@@ -63,9 +67,6 @@ int main(void) {
                         motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
                         TCCR4B = (1 << CS40); // Enable timer
                 }
-
-		LCD_ClearDisplay(); // Clear LCD display
-		LCD_DisplayString((uint8_t *)"Cat Feeder");
 	}
 }
 

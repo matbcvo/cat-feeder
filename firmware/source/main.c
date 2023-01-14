@@ -37,7 +37,7 @@ void LCD_GoTo(uint8_t row, uint8_t column); // Move cursor to X, Y
 unsigned char reverse(unsigned char b); // Get bits in reversed order
 void TimerCounter4_Init();
 
-volatile uint16_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
+volatile uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
 
 int main(void) {
 	// Remove CLKDIV8

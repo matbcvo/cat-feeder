@@ -46,6 +46,9 @@ int main(void) {
 	// Disable JTAG
 	MCUCR = (1<<JTD);
 	MCUCR = (1<<JTD);
+	
+        DDRC |= (1<<PC7); // Motor PWM signal output
+	
 	LCD_Init(); // Initialize LCD
 	TimerCounter4_Init(); // Initialize Timer/Counter4
 	while (1) {

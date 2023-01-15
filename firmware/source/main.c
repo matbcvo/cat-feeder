@@ -241,8 +241,9 @@ void TimerCounter4_Init() {
         // Timer 10-bit Fast PWM operation mode
         // Compare Output Mode (Clear on match, set TOP), Waveform Generation Mode (Fast PWM) 
         TCCR4A = (0<<COM4A1)|(1<<COM4A0)|(1<<PWM4A);
-        // Waveform Generation Mode (Fast PWM), No prescaling
+        // Waveform Generation Mode (Fast PWM)
         TCCR4D = (0 << WGM40);
+	// No prescaling
         TCCR4B = (1<<CS40);
 }
 

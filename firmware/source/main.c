@@ -19,6 +19,24 @@
 #define LCD_CMD_CLEAR_DISPLAY 0b00000001 // Clear LCD display
 #define LCD_CMD_CURSOR_INCREMENT 0b00000110 // Cursor increment
 #define LCD_CMD_CURSOR_LOCATION 0b10000000 // addr location 0 + cursor 0th pos
+
+#define HX711_SCK_DDR           DDRB
+#define HX711_SCK_PORT          PORTB
+#define HX711_SCK_PIN           PB5
+#define HX711_SCK_SET_OUTPUT    HX711_SCK_DDR |= (1<<HX711_SCK_PIN)
+#define HX711_SCK_SET_HIGH      HX711_SCK_PORT |= (1<<HX711_SCK_PIN)
+#define HX711_SCK_SET_LOW       HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN)
+#define HX711_DT_DDR            DDRB
+#define HX711_DT_PORT           PORTB
+#define HX711_DT_PIN            PB6
+#define HX711_DT_INPUT          PINB
+#define HX711_DT_PIN            PB6
+#define HX711_DT_READ           (HX711_DT_INPUT & (1<<HX711_DT_PIN))
+#define HX711_DT_SET_INPUT      HX711_DT_DDR &= ~(1<<HX711_DT_PIN); HX711_DT_SET_HIGH
+#define HX711_DT_SET_OUTPUT     HX711_DT_DDR |= (1<<HX711_DT_PIN); HX711_DT_SET_LOW
+#define HX711_DT_SET_HIGH       HX711_DT_PORT |= (1<<HX711_DT_PIN)
+#define HX711_DT_SET_LOW        HX711_DT_PORT &= ~(1<<HX711_DT_PIN)
+
 /*
 32 - 13% duty cycle
 64 - 25% duty cycle
@@ -36,8 +54,20 @@ void LCD_DisplayString(uint8_t *data); // Display string on LCD
 void LCD_GoTo(uint8_t row, uint8_t column); // Move cursor to X, Y
 unsigned char reverse(unsigned char b); // Get bits in reversed order
 void TimerCounter4_Init();
+void HX711_Init(uint8_t gain); // Initialize HX711
+void HX711_SetGain(uint8_t gain);
+uint32_t HX711_Read(void);
+int HX711_IsReady(void);
+void HX711_SetOffset(double offset); // Set offset, the value that's subtracted from the actual reading (tare weight)
+double HX711_GetOffset(void); // Get current offset
+void HX711_Tare(uint8_t times); // Set the OFFSET value for tare weight; times = how many times to read the tare value
+uint32_t HX711_ReadAverage(uint8_t times); // Returns an average reading; times = how many times to read
+double HX711_GetValue(uint8_t times); // Returns (read_average() - OFFSET), that is the current value without the tare weight; times = how many readings to do
 
 volatile uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
+volatile uint8_t HX711_GAIN; // Amplification factor
+volatile double HX711_OFFSET; // Used for tare weight
+volatile float HX711_SCALE; // Used to return weight in grams, kg, ounces, whatever
 
 int main(void) {
 	// Remove CLKDIV8
@@ -51,12 +81,13 @@ int main(void) {
 	
 	LCD_Init(); // Initialize LCD
 	TimerCounter4_Init(); // Initialize Timer/Counter4
+	HX711_Init();
 	
 	LCD_ClearDisplay(); // Clear LCD display
 	LCD_GoTo(1, 1);
-	LCD_DisplayString((uint8_t *)"Cat Feeder");
+	LCD_DisplayString((uint8_t *)"LCD initialized");
 	LCD_GoTo(2, 1);
-	LCD_DisplayString((uint8_t *)"Starting...");
+	LCD_DisplayString((uint8_t *)"HX711 initialized");
 	
 	while (1) {
 		OCR4A = motor_duty_cycle;
@@ -245,5 +276,85 @@ void TimerCounter4_Init() {
         TCCR4D = (0 << WGM40);
 	// No prescaling
         TCCR4B = (1<<CS40);
+}
+
+void HX711_Init(uint8_t gain) {
+        HX711_SCK_SET_OUTPUT;
+        HX711_DT_SET_INPUT;
+        HX711_SetGain(gain);
+}
+
+void HX711_SetGain(uint8_t gain) {
+        switch(gain) {
+                case 128:
+                        HX711_GAIN = 1;
+                        break;
+                case 64:
+                        HX711_GAIN = 3;
+                        break;
+                case 32:
+                        HX711_GAIN = 2;
+                        break;
+        }
+        HX711_SCK_SET_LOW;
+        HX711_Read();
+}
+
+uint32_t HX711_Read(void) {
+        while (!HX711_IsReady()); // wait for the chip to become ready
+        unsigned long count;
+        unsigned char i;
+        HX711_DT_SET_HIGH;
+        _delay_us(1);
+        HX711_SCK_SET_LOW;
+        _delay_us(1);
+        count=0;
+        while(HX711_DT_READ);
+        for(i=0;i<24;i++) {
+                HX711_SCK_SET_HIGH;
+                _delay_us(1);
+                count=count<<1;
+                HX711_SCK_SET_LOW;
+                _delay_us(1);
+                if(HX711_DT_READ) {
+                        count++;
+                }
+        }
+        count = count>>6;
+        HX711_SCK_SET_HIGH;
+        _delay_us(1);
+        HX711_SCK_SET_LOW;
+        _delay_us(1);
+        count ^= 0x800000;
+        return(count);
+}
+
+int HX711_IsReady(void) {
+        return (HX711_DT_INPUT & (1 << HX711_DT_PIN)) == 0;
+}
+
+void HX711_SetOffset(double offset) {
+    HX711_OFFSET = offset;
+}
+
+double HX711_GetOffset(void) {
+        return HX711_OFFSET;
+}
+
+void HX711_Tare(uint8_t times) {
+        double sum = HX711_ReadAverage(times);
+        HX711_SetOffset(sum);
+}
+
+uint32_t HX711_ReadAverage(uint8_t times) {
+        uint32_t sum = 0;
+        for (uint8_t i = 0; i < times; i++) {
+                sum += HX711_Read();
+        }
+        return sum / times;
+}
+
+double HX711_GetValue(uint8_t times) {
+        return HX711_ReadAverage(times) - HX711_OFFSET;
 }
 

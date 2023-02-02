@@ -81,7 +81,7 @@ int main(void) {
 	
 	LCD_Init(); // Initialize LCD
 	TimerCounter4_Init(); // Initialize Timer/Counter4
-	HX711_Init();
+	HX711_Init(128);
 	
 	LCD_ClearDisplay(); // Clear LCD display
 	LCD_GoTo(1, 1);

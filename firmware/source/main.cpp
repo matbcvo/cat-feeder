@@ -108,11 +108,12 @@ volatile double HX711_SCALE; // Used to return weight in grams, kg, ounces, what
 volatile double calFactorRecip = 1.0; //reciprocal calibration factor (1/calFactor), the HX711 raw data is multiplied by this value
 volatile double calFactor = 1.0; //calibration factor as given in function setCalFactor(float cal)
 volatile long dataSampleSet[HX711_ADC_DATA_SET + 1];	// dataset, make voltile if interrupt is used
-uint8_t divBit = DIVB;
-const uint8_t divBitCompiled = DIVB;
-int samplesInUse = HX711_ADC_SAMPLES;
-long tareOffset = 0;
-long lastSmoothedData = 0;
+volatile uint8_t divBit = DIVB;
+volatile const uint8_t divBitCompiled = DIVB;
+volatile int samplesInUse = HX711_ADC_SAMPLES;
+volatile long tareOffset = 0;
+volatile long lastSmoothedData = 0;
+volatile int readIndex = 0;
 
 int main(void) {
 	// Remove CLKDIV8
@@ -171,7 +172,7 @@ int main(void) {
 		char buffer[16];		
 		LCD_ClearDisplay();
 		
-		snprintf(buffer, 16, "%lu/%d", HX711_ReadAverage(5), (int)HX711_GetScale());
+		snprintf(buffer, 16, "%lu/%d", HX711_ReadAverage(5), (int)HX711_ADC_GetCalFactor());
 		LCD_GoTo(1, 1);
 		LCD_DisplayString((uint8_t *)buffer);
 		
@@ -390,6 +391,35 @@ void HX711_SetGain(uint8_t gain) {
 	HX711_Read();
 }
 
+/*uint32_t HX711_Read(void) {
+	while (!HX711_IsReady()); // wait for the chip to become ready
+	unsigned long count;
+	unsigned char i;
+	HX711_DT_SET_HIGH;
+	_delay_us(1);
+	HX711_SCK_SET_LOW;
+	_delay_us(1);
+	count=0;
+	while(HX711_DT_READ);
+	for(i=0;i<24;i++) {
+		HX711_SCK_SET_HIGH;
+		_delay_us(1);
+		count=count<<1;
+		HX711_SCK_SET_LOW;
+		_delay_us(1);
+		if(HX711_DT_READ) {
+			count++;
+		}
+	}
+	count = count>>6;
+	HX711_SCK_SET_HIGH;
+	_delay_us(1);
+	HX711_SCK_SET_LOW;
+	_delay_us(1);
+	count ^= 0x800000;
+	return(count);
+}*/
+
 uint32_t HX711_Read(void) {
 	while (!HX711_IsReady()); // wait for the chip to become ready
 	unsigned long count;
@@ -416,6 +446,16 @@ uint32_t HX711_Read(void) {
 	HX711_SCK_SET_LOW;
 	_delay_us(1);
 	count ^= 0x800000;
+	
+	if (readIndex == samplesInUse + HX711_ADC_IGN_HIGH_SAMPLE + HX711_ADC_IGN_LOW_SAMPLE - 1) {
+		readIndex = 0;
+	} else {
+		readIndex++;
+	}
+	if(count > 0) {
+		dataSampleSet[readIndex] = (long)count;
+	}
+	
 	return(count);
 }
 

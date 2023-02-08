@@ -82,17 +82,15 @@ typedef unsigned long millis_t;
 #define NOTE_FREQ_D 293.66
 #define NOTE_FREQ_E 329.63
 #define BUZZER_PIN PB0
-#define CLOCKSEL (_BV(CS01)|_BV(CS00))
-#define PRESCALER 64
-#define REG_TCCRA TCCR0A
-#define REG_TCCRB TCCR0B
-#define REG_TIMSK TIMSK0
-#define REG_OCR	OCR0A
-#define BIT_WGM	WGM01
-#define BIT_OCIE OCIE0A
-#define ISR_VECT TIMER0_COMPA_vect
-#define SET_TCCRA()	(REG_TCCRA = _BV(BIT_WGM))
-#define SET_TCCRB()	(REG_TCCRB = CLOCKSEL)
+#define MILLIS_CLOCKSEL (_BV(CS01)|_BV(CS00))
+#define MILLIS_PRESCALER 64
+#define MILLIS_REG_TCCRA TCCR0A
+#define MILLIS_REG_TCCRB TCCR0B
+#define MILLIS_REG_TIMSK TIMSK0
+#define MILLIS_REG_OCR	OCR0A
+#define MILLIS_BIT_WGM	WGM01
+#define MILLIS_BIT_OCIE OCIE0A
+#define MILLIS_ISR_VECT TIMER0_COMPA_vect
 
 volatile uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
 volatile uint8_t buzzer_activated = 1;
@@ -917,30 +915,28 @@ void feeding_music(){
 
 void millis_init() {
 	// Timer settings
-	SET_TCCRA();
-	SET_TCCRB();
-	REG_TIMSK = _BV(BIT_OCIE);
-	REG_OCR = ((F_CPU / PRESCALER) / 1000);
+	MILLIS_REG_TCCRA = _BV(MILLIS_BIT_WGM);
+	MILLIS_REG_TCCRB = MILLIS_CLOCKSEL;
+	MILLIS_REG_TIMSK = _BV(MILLIS_BIT_OCIE);
+	MILLIS_REG_OCR = ((F_CPU / MILLIS_PRESCALER) / 1000);
 }
 
 
 millis_t millis_get() { // Get current milliseconds
 	millis_t ms;
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-	{
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 		ms = milliseconds;
 	}
 	return ms;
 }
 
 void millis_reset() { // Reset milliseconds count to 0
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-	{
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 		milliseconds = 0;
 	}
 }
 
-ISR(ISR_VECT)
+ISR(MILLIS_ISR_VECT)
 {
 	++milliseconds;
 }

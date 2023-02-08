@@ -33,7 +33,6 @@ typedef unsigned long millis_t;
 #define LCD_CMD_CLEAR_DISPLAY 0b00000001 // Clear LCD display
 #define LCD_CMD_CURSOR_INCREMENT 0b00000110 // Cursor increment
 #define LCD_CMD_CURSOR_LOCATION 0b10000000 // addr location 0 + cursor 0th pos
-#define EEPROM_BUFFER_SIZE 128
 #define BUTTON_4_PIN PE6
 #define BUTTON_3_PIN PF5
 #define BUTTON_2_PIN PF6
@@ -41,18 +40,10 @@ typedef unsigned long millis_t;
 #define HX711_SCK_DDR DDRB
 #define HX711_SCK_PORT PORTB
 #define HX711_SCK_PIN PB5
-#define HX711_SCK_SET_OUTPUT HX711_SCK_DDR |= (1<<HX711_SCK_PIN)
-#define HX711_SCK_SET_HIGH HX711_SCK_PORT |= (1<<HX711_SCK_PIN)
-#define HX711_SCK_SET_LOW HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN)
 #define HX711_DT_DDR DDRB
 #define HX711_DT_PORT PORTB
 #define HX711_DT_INPUT PINB
 #define HX711_DT_PIN PB6
-#define HX711_DT_READ (HX711_DT_INPUT & (1<<HX711_DT_PIN))
-#define HX711_DT_SET_INPUT HX711_DT_DDR &= ~(1<<HX711_DT_PIN); HX711_DT_SET_HIGH
-#define HX711_DT_SET_OUTPUT HX711_DT_DDR |= (1<<HX711_DT_PIN); HX711_DT_SET_LOW
-#define HX711_DT_SET_HIGH HX711_DT_PORT |= (1<<HX711_DT_PIN)
-#define HX711_DT_SET_LOW HX711_DT_PORT &= ~(1<<HX711_DT_PIN)
 #define HX711_GAIN_CHANNEL_A_128 1
 #define HX711_GAIN_CHANNEL_A_64	3
 #define HX711_GAIN_CHANNEL_B_32	2
@@ -63,7 +54,7 @@ typedef unsigned long millis_t;
 #define HX711_USEAVERAGEONREAD 1 // Set if use average for read
 #define HX711_CALIBRATIONREADTIMES 5 // Calibration average times read
 #define HX711_ATOMICMODEENABLED	1 // Enable the atomic mode on shift in
-#define EEPROM_HX711_OFFSET	64
+#define EEPROM_HX711_OFFSET 64
 #define EEPROM_HX711_SCALE 80
 #define MENU_MODE_FOOD_WEIGHT 1
 #define MENU_MODE_BUZZER 2

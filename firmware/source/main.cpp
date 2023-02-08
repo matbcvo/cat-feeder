@@ -62,6 +62,8 @@ typedef unsigned long millis_t;
 #define MENU_MODE_FEEDINGS_PER_DAY 4
 #define MENU_MODE_CHANGE_FOOD_AMOUNT 5
 #define MENU_MODE_TIMER 6
+#define MENU_MODE_CHANGE_TIME_HOURS 7
+#define MENU_MODE_CHANGE_TIME_MINUTES 8
 #define MOTOR_EN PC6
 #define MOTOR_PWM PC7
 #define SEC_IN_uSEC 1000000
@@ -280,7 +282,7 @@ int main(void) {
 		if (isLastButtonPressedDown()) {
 			while(!isLastButtonPressedDown()); // Until not pressed
 			menu_mode++;
-			if (menu_mode > 6) {
+			if (menu_mode > 8) {
 				menu_mode = 0;
 			}
 			updateMenu(menu_mode);
@@ -289,8 +291,8 @@ int main(void) {
 		else if (isFirstButtonPressedDown()) {
 			while(!isFirstButtonPressedDown());
 			menu_mode--;
-			if (menu_mode > 6) {
-				menu_mode = 6;
+			if (menu_mode > 8) {
+				menu_mode = 8;
 			}
 			updateMenu(menu_mode);
 			_delay_ms(500);
@@ -329,6 +331,18 @@ int main(void) {
 					food_amount++;
 				}
 			}
+			else if (menu_mode == MENU_MODE_CHANGE_TIME_HOURS) {
+				time_hours++;
+				if (time_hours >= 24) {
+					time_hours = 0;
+				}
+			}
+			else if (menu_mode == MENU_MODE_CHANGE_TIME_MINUTES) {
+				time_minutes++;
+				if (time_minutes >= 60) {
+					time_minutes = 0;
+				}
+			}
 			updateMenu(menu_mode);
 			_delay_ms(500);
 		}
@@ -342,6 +356,18 @@ int main(void) {
 			else if (menu_mode == MENU_MODE_CHANGE_FOOD_AMOUNT) {
 				if (food_amount > 1) {
 					food_amount--;
+				}
+			}
+			else if (menu_mode == MENU_MODE_CHANGE_TIME_HOURS) {
+				time_hours--;
+				if (time_hours >= 24) {
+					time_hours = 0;
+				}
+			}
+			else if (menu_mode == MENU_MODE_CHANGE_TIME_MINUTES) {
+				time_minutes--;
+				if (time_minutes >= 60) {
+					time_minutes = 0;
 				}
 			}
 			updateMenu(menu_mode);
@@ -756,8 +782,24 @@ void updateMenu(uint8_t menu_mode) {
 	else if (menu_mode == MENU_MODE_TIMER) {
 		char buffer[16];
 		sprintf(buffer, "Timer: %02d:%02d:%02d", time_hours, time_minutes, time_seconds);
-		LCD_GoTo(1,1);
+		LCD_GoTo(1, 1);
 		LCD_DisplayString((uint8_t *)buffer);
+	}
+	else if (menu_mode == MENU_MODE_CHANGE_TIME_HOURS) {
+		char buffer[16];
+		sprintf(buffer, "Set hours: %02d:", time_hours);
+		LCD_GoTo(1, 1);
+		LCD_DisplayString((uint8_t *)buffer);
+		LCD_GoTo(2, 1);
+		LCD_DisplayString((uint8_t *)"  (2) - (3) +");
+	}
+	else if (menu_mode == MENU_MODE_CHANGE_TIME_MINUTES) {
+		char buffer[16];
+		sprintf(buffer, "Set minutes: :%02d", time_minutes);
+		LCD_GoTo(1, 1);
+		LCD_DisplayString((uint8_t *)buffer);
+		LCD_GoTo(2, 1);
+		LCD_DisplayString((uint8_t *)"  (2) - (3) +");
 	}
 }
 
@@ -773,6 +815,9 @@ void feeding_cycle() {
 	motor_duty_cycle = 0;
 	OCR4A = 0;
 	TCCR4B = (0 << CS40); // Disable timer
+	if (buzzer_activated == 1) {
+		feeding_music();
+	}
 }
 
 void play_note_a() {

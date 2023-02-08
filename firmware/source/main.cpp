@@ -376,43 +376,43 @@ void LCD_SendCommand(char command) {
 	// First 6 LCD data pins are on Port D
 	if ((command >> 0) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_0); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_0); // Set bit 0
 	}
 	if ((command >> 1) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_1); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_1); // Set bit 0
 	}
 	if ((command >> 2) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_2); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_2); // Set bit 0
 	}
 	if ((command >> 3) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_3); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_3); // Set bit 0
 	}
 	if ((command >> 4) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_4); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_4); // Set bit 0
 	}
 	if ((command >> 5) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_5); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_5); // Set bit 0
 	}
 	// Last 2 LCD data pins are on Port B
 	if ((command >> 6) & 1) {
 		PORTB |= (1<<LCD_DATA_PIN_6); // Set bit 1
-		} else {
+	} else {
 		PORTB &= ~(1<<LCD_DATA_PIN_6); // Set bit 0
 	}
 	if ((command >> 7) & 1) {
 		PORTB |= (1<<LCD_DATA_PIN_7); // Set bit 1
-		} else {
+	} else {
 		PORTB &= ~(1<<LCD_DATA_PIN_7); // Set bit 0
 	}
 	
@@ -434,43 +434,43 @@ void LCD_DisplayChar(uint8_t data) {
 	// First 6 LCD data pins are on Port D
 	if ((data >> 0) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_0); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_0); // Set bit 0
 	}
 	if ((data >> 1) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_1); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_1); // Set bit 0
 	}
 	if ((data >> 2) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_2); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_2); // Set bit 0
 	}
 	if ((data >> 3) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_3); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_3); // Set bit 0
 	}
 	if ((data >> 4) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_4); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_4); // Set bit 0
 	}
 	if ((data >> 5) & 1) {
 		PORTD |= (1<<LCD_DATA_PIN_5); // Set bit 1
-		} else {
+	} else {
 		PORTD &= ~(1<<LCD_DATA_PIN_5); // Set bit 0
 	}
 	// Last 2 LCD data pins are on Port B
 	if ((data >> 6) & 1) {
 		PORTB |= (1<<LCD_DATA_PIN_6); // Set bit 1
-		} else {
+	} else {
 		PORTB &= ~(1<<LCD_DATA_PIN_6); // Set bit 0
 	}
 	if ((data >> 7) & 1) {
 		PORTB |= (1<<LCD_DATA_PIN_7); // Set bit 1
-		} else {
+	} else {
 		PORTB &= ~(1<<LCD_DATA_PIN_7); // Set bit 0
 	}
 	

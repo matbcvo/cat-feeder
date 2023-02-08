@@ -8,6 +8,13 @@
 #include <stdlib.h>
 #include <util/atomic.h>
 
+/* Small % duty cycle = Slow motor speed
+32 - 13% duty cycle
+64 - 25% duty cycle
+128 - 50% duty cycle
+192 - 75% duty cycle
+*/
+#define DEFAULT_MOTOR_DUTY_CYCLE 16
 #define LCD_DATA_PIN_0 PD0 // LCD_DB0 on Port D (PD0 - LCD_DB0)
 #define LCD_DATA_PIN_1 PD1 // LCD_DB1 on Port D (PD1 - LCD_DB1)
 #define LCD_DATA_PIN_2 PD2 // LCD_DB2 on Port D (PD2 - LCD_DB2)
@@ -25,72 +32,53 @@
 #define LCD_CMD_CURSOR_INCREMENT 0b00000110 // Cursor increment
 #define LCD_CMD_CURSOR_LOCATION 0b10000000 // addr location 0 + cursor 0th pos
 #define EEPROM_BUFFER_SIZE 128
-//Defining buttons
-#define BT4 PE6		//Button4 pin
-#define BT3 PF5		//Button3 pin
-#define BT2 PF6		//Button2 pin
-#define BT1 PF7		//Button1 pin
-#define HX711_SCK_DDR           DDRB
-#define HX711_SCK_PORT          PORTB
-#define HX711_SCK_PIN           PB5
-#define HX711_SCK_SET_OUTPUT    HX711_SCK_DDR |= (1<<HX711_SCK_PIN)
-#define HX711_SCK_SET_HIGH      HX711_SCK_PORT |= (1<<HX711_SCK_PIN)
-#define HX711_SCK_SET_LOW       HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN)
-#define HX711_DT_DDR            DDRB
-#define HX711_DT_PORT           PORTB
-#define HX711_DT_INPUT          PINB
-#define HX711_DT_PIN            PB6
-#define HX711_DT_READ           (HX711_DT_INPUT & (1<<HX711_DT_PIN))
-#define HX711_DT_SET_INPUT      HX711_DT_DDR &= ~(1<<HX711_DT_PIN); HX711_DT_SET_HIGH
-#define HX711_DT_SET_OUTPUT     HX711_DT_DDR |= (1<<HX711_DT_PIN); HX711_DT_SET_LOW
-#define HX711_DT_SET_HIGH       HX711_DT_PORT |= (1<<HX711_DT_PIN)
-#define HX711_DT_SET_LOW        HX711_DT_PORT &= ~(1<<HX711_DT_PIN)
-/*
-32 - 13% duty cycle
-64 - 25% duty cycle
-128 - 50% duty cycle
-192 - 75% duty cycle
-*/
-#define DEFAULT_MOTOR_DUTY_CYCLE 16
-//set ports and pins
-#define HX711_DTPORT PORTB
-#define HX711_DTDDR DDRB
-#define HX711_DTPIN PINB
-#define HX711_DTPINNUM PB6
-#define HX711_SCKPORT PORTB
-#define HX711_SCKDDR DDRB
-#define HX711_SCKPINNUM PB5
-//defines gain
-#define HX711_GAINCHANNELA128 1
-#define HX711_GAINCHANNELA64 3
-#define HX711_GAINCHANNELB32 2
-#define HX711_GAINDEFAULT HX711_GAINCHANNELA128
-#define HX711_SCALEDEFAULT 10000 // defines scale
-#define HX711_OFFSETDEFAULT 8000000 // defines offset
-#define HX711_READTIMES 10 // set how many time to read
-#define HX711_USEAVERAGEONREAD 0 // set if use average for read
-#define HX711_CALIBRATIONREADTIMES 5 // calibration average times read
-#define HX711_ATOMICMODEENABLED 1 // enable the atomic mode on shift in
+#define BUTTON_4_PIN PE6
+#define BUTTON_3_PIN PF5
+#define BUTTON_2_PIN PF6
+#define BUTTON_1_PIN PF7
+#define HX711_SCK_DDR DDRB
+#define HX711_SCK_PORT PORTB
+#define HX711_SCK_PIN PB5
+#define HX711_SCK_SET_OUTPUT HX711_SCK_DDR |= (1<<HX711_SCK_PIN)
+#define HX711_SCK_SET_HIGH HX711_SCK_PORT |= (1<<HX711_SCK_PIN)
+#define HX711_SCK_SET_LOW HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN)
+#define HX711_DT_DDR DDRB
+#define HX711_DT_PORT PORTB
+#define HX711_DT_INPUT PINB
+#define HX711_DT_PIN PB6
+#define HX711_DT_READ (HX711_DT_INPUT & (1<<HX711_DT_PIN))
+#define HX711_DT_SET_INPUT HX711_DT_DDR &= ~(1<<HX711_DT_PIN); HX711_DT_SET_HIGH
+#define HX711_DT_SET_OUTPUT HX711_DT_DDR |= (1<<HX711_DT_PIN); HX711_DT_SET_LOW
+#define HX711_DT_SET_HIGH HX711_DT_PORT |= (1<<HX711_DT_PIN)
+#define HX711_DT_SET_LOW HX711_DT_PORT &= ~(1<<HX711_DT_PIN)
+#define HX711_GAIN_CHANNEL_A_128 1
+#define HX711_GAIN_CHANNEL_A_64	3
+#define HX711_GAIN_CHANNEL_B_32	2
+#define HX711_GAIN_DEFAULT HX711_GAIN_CHANNEL_A_128
+#define HX711_SCALEDEFAULT 10000 // Defines scale
+#define HX711_OFFSETDEFAULT 8000000 // Defines offset
+#define HX711_READTIMES 5 // Set how many time to read
+#define HX711_USEAVERAGEONREAD 1 // Set if use average for read
+#define HX711_CALIBRATIONREADTIMES 5 // Calibration average times read
+#define HX711_ATOMICMODEENABLED	1 // Enable the atomic mode on shift in
 #define EEPROM_HX711_OFFSET	64
-#define EEPROM_HX711_SCALE	80
-#define MENU_MODE_FOOD		1
-#define MENU_MODE_SOUND		2
-#define MENU_MODE_FEED		3
-#define MENU_MODE_INTERVAL	4
-#define MENU_MODE_AMOUNT	5
-#define MOTOR_EN	PC6
-#define MOTOR_PWM	PC7
-//Defining music constants
+#define EEPROM_HX711_SCALE 80
+#define MENU_MODE_FOOD_WEIGHT 1
+#define MENU_MODE_BUZZER 2
+#define MENU_MODE_FEED 3
+#define MENU_MODE_FEEDINGS_PER_DAY 4
+#define MENU_MODE_CHANGE_FOOD_AMOUNT 5
+#define MOTOR_EN PC6
+#define MOTOR_PWM PC7
 #define SEC_IN_uSEC 1000000
-//Music frequency in hz
-#define NOTE_FREQ_A 493.88
+#define NOTE_FREQ_A 493.88 // music frequency in Hz
 #define NOTE_FREQ_C 261.53
 #define NOTE_FREQ_F 349.23
 #define NOTE_FREQ_AS 466.16
 #define NOTE_FREQ_G 392
 #define NOTE_FREQ_D 293.66
 #define NOTE_FREQ_E 329.63
-#define BUZZER PB0
+#define BUZZER_PIN PB0
 
 volatile uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
 volatile uint8_t buzzer_activated = 1;
@@ -110,6 +98,7 @@ void LCD_DisplayString(uint8_t *data); // Display string on LCD
 void LCD_GoTo(uint8_t row, uint8_t column); // Move cursor to X, Y
 unsigned char reverse(unsigned char b); // Get bits in reversed order
 void TimerCounter4_Init();
+void HX711_Init(uint8_t gain, double scale, int32_t offset);
 int32_t HX711_Read();
 int32_t hx711_ReadAverage(uint8_t times);
 double HX711_Readwithtare();
@@ -125,23 +114,20 @@ void HX711_PowerDown();
 void HX711_PowerUp();
 void HX711_Calibrate1SetOffset();
 void HX711_Calibrate2SetScale(double weight);
-void HX711_Init(uint8_t gain, double scale, int32_t offset);
 uint8_t isFirstButtonPressedDown();
 uint8_t isLastButtonPressedDown();
 uint8_t isSecondButtonPressedDown();
 uint8_t isThirdButtonPressedDown();
 void updateMenu(uint8_t menu_mode);
 void feeding_cycle();
-//Musical notes function calling
-void play_note_as();
+void play_note_as(); // musical notes function calling
 void play_note_c();
 void play_note_f();
 void play_note_a();
 void play_note_D();
 void play_note_E();
 void play_note_G();
-//Feeding tune function calling
-void feeding_music();
+void feeding_music(); // feeding tune function calling
 
 int main(void) {
 	// Remove CLKDIV8
@@ -151,13 +137,16 @@ int main(void) {
 	MCUCR = (1<<JTD);
 	MCUCR = (1<<JTD);
 	
-	DDRC |= (1<<PORTD6); // Motor PWM signal output
+	// Define motor PWM signal as output
+	DDRC |= (1<<MOTOR_PWM);
+	// Disable motor enable pin for now (setting as input)
+	DDRC = (0<<MOTOR_EN);
 	
 	// Define button as input
-	DDRF &= (~(1<<BT1));
-	DDRF &=	(~(1<<BT2));
-	DDRF &= (~(1<<BT3));
-	DDRE &= (~(1<<BT4));
+	DDRF &= (~(1<<BUTTON_1_PIN));
+	DDRF &=	(~(1<<BUTTON_2_PIN));
+	DDRF &= (~(1<<BUTTON_3_PIN));
+	DDRE &= (~(1<<BUTTON_4_PIN));
 	
 	LCD_Init(); // Initialize LCD
 	TimerCounter4_Init(); // Initialize Timer/Counter4
@@ -165,10 +154,6 @@ int main(void) {
 	LCD_ClearDisplay(); // Clear LCD display
 	LCD_GoTo(1, 1);
 	LCD_DisplayString((uint8_t *)"LCD init-d");
-	
-	DDRC = (0<<MOTOR_EN);
-	motor_duty_cycle = 0;
-	TCCR4B = (0 << CS40); // Disable timer
 	
 	HX711_Init(HX711_gain, HX711_scale, HX711_offset); // Initialize HX711
 	
@@ -179,7 +164,7 @@ int main(void) {
 	_delay_ms(1000);
 	
 	// first and last buttons are pressed - start calibrate
-	if ((PINF & (1 << BT1)) && (PINE && (1 << BT4))) {
+	if ((PINF & (1 << BUTTON_1_PIN)) && (PINE && (1 << BUTTON_4_PIN))) {
 		HX711_calibration_process = 1;
 		
 		LCD_ClearDisplay();
@@ -242,7 +227,7 @@ int main(void) {
 	while (1) {
 		counter++;
 		if (counter >= 0x0000FFFF) {
-			if (menu_mode == 0 || menu_mode == MENU_MODE_FOOD) {
+			if (menu_mode == 0 || menu_mode == MENU_MODE_FOOD_WEIGHT) {
 				updateMenu(menu_mode);
 			}
 			counter = 0;
@@ -314,7 +299,7 @@ int main(void) {
 		}
 		else if (isThirdButtonPressedDown()) {
 			while(!isThirdButtonPressedDown());
-			if (menu_mode == MENU_MODE_SOUND) {
+			if (menu_mode == MENU_MODE_BUZZER) {
 				LCD_GoTo(2, 1);
 				if (buzzer_activated == 1) {
 					buzzer_activated = 0;
@@ -336,12 +321,12 @@ int main(void) {
 					feeding_music();
 				}
 			}
-			else if (menu_mode == MENU_MODE_INTERVAL) {
+			else if (menu_mode == MENU_MODE_FEEDINGS_PER_DAY) {
 				if (feedings_per_day < 5) {
 					feedings_per_day++;
 				}
 			}
-			else if (menu_mode == MENU_MODE_AMOUNT) {
+			else if (menu_mode == MENU_MODE_CHANGE_FOOD_AMOUNT) {
 				if (food_amount < 5) {
 					food_amount++;
 				}
@@ -351,12 +336,12 @@ int main(void) {
 		}
 		else if (isSecondButtonPressedDown()) {
 			while(!isSecondButtonPressedDown());
-			if (menu_mode == MENU_MODE_INTERVAL) {
+			if (menu_mode == MENU_MODE_FEEDINGS_PER_DAY) {
 				if (feedings_per_day > 1) {
 					feedings_per_day--;
 				}
 			}
-			else if (menu_mode == MENU_MODE_AMOUNT) {
+			else if (menu_mode == MENU_MODE_CHANGE_FOOD_AMOUNT) {
 				if (food_amount > 1) {
 					food_amount--;
 				}
@@ -530,36 +515,34 @@ void TimerCounter4_Init() {
 	TCCR4B = (1<<CS40);
 }
 
-int32_t HX711_Read() {
-	// Read raw value
+int32_t HX711_Read() { // Read raw value
 	uint32_t count = 0;
 	uint8_t i = 0;
-	//wait for the chip to became ready
-	while (HX711_DTPIN & (1<<HX711_DTPINNUM));
+	
+	while (HX711_DT_INPUT & (1<<HX711_DT_PIN)); // Wait for the chip to became ready
 
 #if HX711_ATOMICMODEENABLED == 1
 	ATOMIC_BLOCK(ATOMIC_FORCEON)
 	{
 #endif
-	//read data with a 24 shift
-	for(i=0;i<24;i++) {
-		HX711_SCKPORT |= (1<<HX711_SCKPINNUM);
+	for(i = 0; i < 24; i++) { // Read data with a 24 shift
+		HX711_SCK_PORT |= (1<<HX711_SCK_PIN);
 		// asm volatile("nop");
 		_delay_us(1);
 		count=count<<1;
-		HX711_SCKPORT &= ~(1<<HX711_SCKPINNUM);
+		HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN);
 		// asm volatile("nop");
 		_delay_us(1);
-		if(HX711_DTPIN & (1<<HX711_DTPINNUM))
+		if(HX711_DT_INPUT & (1<<HX711_DT_PIN)) {
 			count++;
+		}
 	}
 	count ^= 0x800000;
-	//set the channel and the gain
-	for (i=0; i < HX711_gain; i++) {
-		HX711_SCKPORT |= (1<<HX711_SCKPINNUM);
+	for (i=0; i < HX711_gain; i++) { // Set the channel and the gain
+		HX711_SCK_PORT |= (1<<HX711_SCK_PIN);
 		// asm volatile("nop");
 		_delay_us(1);
-		HX711_SCKPORT &= ~(1<<HX711_SCKPINNUM);
+		HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN);
 	}
 #if HX711_ATOMICMODEENABLED == 1
 	}
@@ -567,8 +550,7 @@ int32_t HX711_Read() {
 	return count;
 }
 
-int32_t HX711_ReadAverage(uint8_t times) {
-	// Read raw value using average
+int32_t HX711_ReadAverage(uint8_t times) { // Read raw value using average
 	int32_t sum = 0;
 	uint8_t i = 0;
 	for (i=0; i < times; i++) {
@@ -577,8 +559,7 @@ int32_t HX711_ReadAverage(uint8_t times) {
 	return (int32_t)(sum/times);
 }
 
-double HX711_GetValue() {
-	// Perform a read excluding tare
+double HX711_GetValue() { // Perform a read excluding tare
 #if HX711_USEAVERAGEONREAD == 1
 	return (double)HX711_ReadAverage(HX711_READTIMES)-(double)HX711_offset;
 #else
@@ -586,53 +567,49 @@ double HX711_GetValue() {
 #endif
 }
 
-double HX711_GetWeight() {
-	// Return the weight
+double HX711_GetWeight() { // Return the weight
 	return HX711_GetValue()/HX711_scale;
 }
 
-void HX711_SetGain(uint16_t gain) {
-	// Set the gain
-	if (gain == HX711_GAINCHANNELA128)
+void HX711_SetGain(uint16_t gain) { // Set the gain
+	if (gain == HX711_GAIN_CHANNEL_A_128) {
 		HX711_gain = 1;
-	else if (gain == HX711_GAINCHANNELA64)
+	}
+	else if (gain == HX711_GAIN_CHANNEL_A_64) {
 		HX711_gain = 3;
-	else if (gain == HX711_GAINCHANNELB32)
+	}
+	else if (gain == HX711_GAIN_CHANNEL_B_32) {
 		HX711_gain = 2;
-	else
+	}
+	else {
 		HX711_gain = 1;
-
-	HX711_SCKPORT &= ~(1<<HX711_SCKPINNUM);
+	}
+	
+	HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN);
 	HX711_Read();
 }
 
-uint16_t HX711_GetGain() {
-	// Return the actual gain
+uint16_t HX711_GetGain() { // Return the actual gain
 	return HX711_gain;
 }
 
-void HX711_SetScale(double scale) {
-	// Set the scale to use
+void HX711_SetScale(double scale) { // Set the scale to use
 	HX711_scale = scale;
 }
 
-double HX711_GetScale() {
-	// Return the actual scale
+double HX711_GetScale() { // Return the actual scale
 	return HX711_scale;
 }
 
-void HX711_SetOffset(int32_t offset) {
-	// Set the offset raw value
+void HX711_SetOffset(int32_t offset) { // Set the offset raw value
 	HX711_offset = offset;
 }
 
-int32_t HX711_GetOffset() {
-	// Return the actual offset
+int32_t HX711_GetOffset() { // Return the actual offset
 	return HX711_offset;
 }
 
-void HX711_TareToZero() {
-	// Set tare to zero
+void HX711_TareToZero() { // Set tare to zero
 #if HX711_USEAVERAGEONREAD == 1
 	double sum = HX711_ReadAverage(HX711_READTIMES);
 #else
@@ -656,50 +633,45 @@ void HX711_Calibrate2SetScale(double weight) {
 }
 
 void HX711_Init(uint8_t gain, double scale, int32_t offset) {
-	//set sck as output
-	HX711_SCKDDR |= (1<<HX711_SCKPINNUM);
-	HX711_SCKPORT &= ~(1<<HX711_SCKPINNUM);
-	//set dt as input
-	HX711_DTDDR &=~ (1<<HX711_DTPINNUM);
-
-	//set gain
-	HX711_SetGain(gain);
-	//set scale
-	HX711_SetScale(scale);
-	//set offset
-	HX711_SetOffset(offset);
+	// Set SCK as output
+	HX711_SCK_DDR |= (1<<HX711_SCK_PIN);
+	HX711_SCK_PORT &= ~(1<<HX711_SCK_PIN);
+	HX711_DT_DDR &=~ (1<<HX711_DT_PIN); // Set DT as input
+	HX711_SetGain(gain); // Set gain
+	HX711_SetScale(scale); // Set scale
+	HX711_SetOffset(offset); // Set offset
 }
 
 uint8_t isAnyButtonPressedDown() {
-	if (PINF & (1 << BT1) || (PINF & (1 << BT2)) || (PINF & (1 << BT3)) || (PINE & (1 << BT4))) {
+	if (PINF & (1 << BUTTON_1_PIN) || (PINF & (1 << BUTTON_2_PIN)) || (PINF & (1 << BUTTON_3_PIN)) || (PINE & (1 << BUTTON_4_PIN))) {
 		return 1;
 	}
 	return 0;
 }
 
 uint8_t isFirstButtonPressedDown() {
-	if (PINF & (1 << BT1)) {
-		return 1;
-	}
-	return 0;
-}
-
-uint8_t isLastButtonPressedDown() {
-	if (PINE & (1 << BT4)) {
+	if (PINF & (1 << BUTTON_1_PIN)) {
 		return 1;
 	}
 	return 0;
 }
 
 uint8_t isSecondButtonPressedDown() {
-	if (PINF & (1 << BT2)) {
+	if (PINF & (1 << BUTTON_2_PIN)) {
 		return 1;
 	}
 	return 0;
 }
 
 uint8_t isThirdButtonPressedDown() {
-	if (PINF & (1 << BT3)) {
+	if (PINF & (1 << BUTTON_3_PIN)) {
+		return 1;
+	}
+	return 0;
+}
+
+uint8_t isLastButtonPressedDown() {
+	if (PINE & (1 << BUTTON_4_PIN)) {
 		return 1;
 	}
 	return 0;
@@ -721,17 +693,21 @@ void updateMenu(uint8_t menu_mode) {
 			LCD_DisplayString((uint8_t *)"(1)Prev  Next(4)");
 		}
 	}
-	else if (menu_mode == MENU_MODE_FOOD) {
+	else if (menu_mode == MENU_MODE_FOOD_WEIGHT) {
 		LCD_DisplayString((uint8_t *)"Food container");
 		LCD_GoTo(2, 1);
 		double weight = HX711_GetWeight();
-		char buffer[16];
-		dtostrf(weight, 3, 0, buffer);
-		LCD_DisplayString((uint8_t *)"Weight: ");
-		LCD_DisplayString((uint8_t *)buffer);
-		LCD_DisplayString((uint8_t *)"g");
+		if (weight < 0.0d) {
+			LCD_DisplayString((uint8_t *)"Weight: 0g");
+		} else {
+			char buffer[16];
+			dtostrf(weight, 3, 0, buffer);
+			LCD_DisplayString((uint8_t *)"Weight: ");
+			LCD_DisplayString((uint8_t *)buffer);
+			LCD_DisplayString((uint8_t *)"g");	
+		}
 	}
-	else if (menu_mode == MENU_MODE_SOUND) {
+	else if (menu_mode == MENU_MODE_BUZZER) {
 		if (buzzer_activated == 1) {
 			LCD_DisplayString((uint8_t *)"Buzzer [ON]/OFF");
 			LCD_GoTo(2, 1);
@@ -747,7 +723,7 @@ void updateMenu(uint8_t menu_mode) {
 		LCD_GoTo(2, 1);
 		LCD_DisplayString((uint8_t *)"       (3) Yes");
 	}
-	else if (menu_mode == MENU_MODE_INTERVAL) {
+	else if (menu_mode == MENU_MODE_FEEDINGS_PER_DAY) {
 		LCD_DisplayString((uint8_t *)"Feedings/day: ");
 		char buffer[16];
 		itoa(feedings_per_day, buffer, 10);
@@ -763,7 +739,7 @@ void updateMenu(uint8_t menu_mode) {
 			LCD_DisplayString((uint8_t *)"  (2) - (3) +");
 		}
 	}
-	else if (menu_mode == MENU_MODE_AMOUNT) {
+	else if (menu_mode == MENU_MODE_CHANGE_FOOD_AMOUNT) {
 		LCD_DisplayString((uint8_t *)"Food amount: ");
 		char buffer[16];
 		itoa(food_amount, buffer, 10);
@@ -787,7 +763,7 @@ void feeding_cycle() {
 	OCR4A = motor_duty_cycle;
 	TCCR4B = (1 << CS40); // Enable timer
 	for (int i=0; i < food_amount; i++) {
-		_delay_ms(250); //Should deliver the food by 1 cycle
+		_delay_ms(250); // Should deliver the food by 1 cycle
 	}
 	DDRC = (0<<MOTOR_EN);
 	motor_duty_cycle = 0;
@@ -801,9 +777,9 @@ void play_note_a() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/4)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_us(note_period/2);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_us(note_period/2);
 	}
 }
@@ -814,9 +790,9 @@ void play_note_as() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/4)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_ms(note_period/2000);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_ms(note_period/2000);
 	}
 }
@@ -827,9 +803,9 @@ void play_note_f() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/8)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_us(note_period/2);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_us(note_period/2);
 	}
 }
@@ -840,9 +816,9 @@ void play_note_c() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/4)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_us(note_period/2);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_us(note_period/2);
 	}
 }
@@ -853,9 +829,9 @@ void play_note_G() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/2)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_us(note_period/2);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_us(note_period/2);
 	}
 }
@@ -866,9 +842,9 @@ void play_note_D() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/4)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_us(note_period/2);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_us(note_period/2);
 	}
 }
@@ -879,9 +855,9 @@ void play_note_E() {
 	double total_duration = 0;
 	while(total_duration <= (SEC_IN_uSEC/8)) {
 		total_duration += note_period;
-		PORTB = (1 << BUZZER);
+		PORTB = (1 << BUZZER_PIN);
 		_delay_us(note_period/2);
-		PORTB = (0 << BUZZER);
+		PORTB = (0 << BUZZER_PIN);
 		_delay_us(note_period/2);
 	}
 }

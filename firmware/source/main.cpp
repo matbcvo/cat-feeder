@@ -83,18 +83,18 @@ typedef unsigned long millis_t;
 #define MILLIS_BIT_OCIE OCIE0A
 #define MILLIS_ISR_VECT TIMER0_COMPA_vect
 
-volatile uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
-volatile uint8_t buzzer_activated = 1;
-static uint8_t HX711_calibration_process = 0;
-static uint8_t HX711_gain = 0; // actual gain
-static double HX711_scale = 0; // actual scale
-static int32_t HX711_offset = 0; // actual offset
-volatile uint8_t food_amount = 2;
-volatile uint8_t feedings_per_day = 1;
-static volatile millis_t milliseconds;
-static uint8_t time_sec = 0;
-static uint8_t time_min = 0;
-static uint8_t time_hr = 0;
+uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
+uint8_t buzzer_activated = 1;
+uint8_t HX711_calibration_process = 0;
+uint8_t HX711_gain = 0; // actual gain
+double HX711_scale = 0; // actual scale
+int32_t HX711_offset = 0; // actual offset
+uint8_t food_amount = 2;
+uint8_t feedings_per_day = 1;
+volatile millis_t milliseconds;
+uint8_t time_sec = 0;
+uint8_t time_min = 0;
+uint8_t time_hr = 0;
 
 void LCD_Init(); // Initialize LCD
 void LCD_EnablePulse(); // Enable Pulse, latch data into register
@@ -208,8 +208,8 @@ int main(void) {
 		LCD_ClearDisplay();
 		LCD_DisplayString((uint8_t *)"Doing scale");
 		
-		double known_weight = 500.0; // 500g
-		HX711_Calibrate2SetScale(known_weight);
+		double known_mass = 500.0; // 500g
+		HX711_Calibrate2SetScale(known_mass);
 	
 		LCD_ClearDisplay();
 		LCD_DisplayString((uint8_t *)"Scale set");

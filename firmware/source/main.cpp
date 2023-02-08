@@ -92,10 +92,16 @@ int32_t HX711_offset = 0; // actual offset
 uint8_t food_amount = 2;
 uint8_t feedings_per_day = 1;
 volatile millis_t milliseconds;
-uint8_t time_sec = 0;
-uint8_t time_min = 0;
-uint8_t time_hr = 0;
+uint8_t time_seconds = 0;
+uint8_t time_minutes = 0;
+uint8_t time_hours = 0;
 
+uint8_t isAnyButtonPressedDown();
+uint8_t isFirstButtonPressedDown();
+uint8_t isSecondButtonPressedDown();
+uint8_t isThirdButtonPressedDown();
+uint8_t isLastButtonPressedDown();
+void updateMenu(uint8_t menu_mode);
 void LCD_Init(); // Initialize LCD
 void LCD_EnablePulse(); // Enable Pulse, latch data into register
 void LCD_SendCommand(char command); // Send command to LCD
@@ -121,11 +127,6 @@ void HX711_PowerDown();
 void HX711_PowerUp();
 void HX711_Calibrate1SetOffset();
 void HX711_Calibrate2SetScale(double weight);
-uint8_t isFirstButtonPressedDown();
-uint8_t isLastButtonPressedDown();
-uint8_t isSecondButtonPressedDown();
-uint8_t isThirdButtonPressedDown();
-void updateMenu(uint8_t menu_mode);
 void feeding_cycle();
 void play_note_as(); // musical notes function calling
 void play_note_c();
@@ -230,46 +231,46 @@ int main(void) {
 
 	while (1) {
 		if (millis_get() >= 1000) {
-			time_sec += 1;
+			time_seconds += 1;
 			millis_reset();
 			updateMenu(menu_mode);
 		}
-		if (time_sec >= 60) {
-			time_min += 1;
-			time_sec = 0;
+		if (time_seconds >= 60) {
+			time_minutes += 1;
+			time_seconds = 0;
 		}
-		if (time_min >= 60) {
-			time_hr += 1;
-			time_min = 0;
+		if (time_minutes >= 60) {
+			time_hours += 1;
+			time_minutes = 0;
 		}
-		if (time_hr >= 24) {
-			time_hr = 0;
+		if (time_hours >= 24) {
+			time_hours = 0;
 		}
 		
-		if (time_min == 0 && time_sec == 0) {
+		if (time_minutes == 0 && time_seconds == 0) {
 			switch(feedings_per_day) {
 				case 1: // one feeding per day
-					if (time_hr == 12) {
+					if (time_hours == 12) {
 						feeding_cycle();
 					}
 				break;
 				case 2: // two feedings per day
-					if (time_hr == 12 || time_hr == 18) {
+					if (time_hours == 12 || time_hours == 18) {
 						feeding_cycle();
 					}
 				break;
 				case 3:
-					if (time_hr == 8 || time_hr == 12 || time_hr == 16) {
+					if (time_hours == 8 || time_hours == 12 || time_hours == 16) {
 						feeding_cycle();
 					}
 				break;
 				case 4:
-					if (time_hr == 12 || time_hr == 14 || time_hr == 16 || time_hr == 18) {
+					if (time_hours == 12 || time_hours == 14 || time_hours == 16 || time_hours == 18) {
 						feeding_cycle();
 					}
 				break;
 				case 5:
-					if (time_hr == 12 || time_hr == 14 || time_hr == 16 || time_hr == 18 || time_hr == 20) {
+					if (time_hours == 12 || time_hours == 14 || time_hours == 16 || time_hours == 18 || time_hours == 20) {
 						feeding_cycle();
 					}
 				break;
@@ -754,7 +755,7 @@ void updateMenu(uint8_t menu_mode) {
 	}
 	else if (menu_mode == MENU_MODE_TIMER) {
 		char buffer[16];
-		sprintf(buffer, "Timer: %02d:%02d:%02d", time_hr, time_min, time_sec);
+		sprintf(buffer, "Timer: %02d:%02d:%02d", time_hours, time_minutes, time_seconds);
 		LCD_GoTo(1,1);
 		LCD_DisplayString((uint8_t *)buffer);
 	}

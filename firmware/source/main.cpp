@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <util/atomic.h>
 
+typedef unsigned long millis_t;
+
 /* Small % duty cycle = Slow motor speed
 32 - 13% duty cycle
 64 - 25% duty cycle
@@ -68,6 +70,7 @@
 #define MENU_MODE_FEED 3
 #define MENU_MODE_FEEDINGS_PER_DAY 4
 #define MENU_MODE_CHANGE_FOOD_AMOUNT 5
+#define MENU_MODE_TIMER 6
 #define MOTOR_EN PC6
 #define MOTOR_PWM PC7
 #define SEC_IN_uSEC 1000000
@@ -79,6 +82,17 @@
 #define NOTE_FREQ_D 293.66
 #define NOTE_FREQ_E 329.63
 #define BUZZER_PIN PB0
+#define CLOCKSEL (_BV(CS01)|_BV(CS00))
+#define PRESCALER 64
+#define REG_TCCRA TCCR0A
+#define REG_TCCRB TCCR0B
+#define REG_TIMSK TIMSK0
+#define REG_OCR	OCR0A
+#define BIT_WGM	WGM01
+#define BIT_OCIE OCIE0A
+#define ISR_VECT TIMER0_COMPA_vect
+#define SET_TCCRA()	(REG_TCCRA = _BV(BIT_WGM))
+#define SET_TCCRB()	(REG_TCCRB = CLOCKSEL)
 
 volatile uint8_t motor_duty_cycle = DEFAULT_MOTOR_DUTY_CYCLE;
 volatile uint8_t buzzer_activated = 1;
@@ -88,6 +102,10 @@ static double HX711_scale = 0; // actual scale
 static int32_t HX711_offset = 0; // actual offset
 volatile uint8_t food_amount = 2;
 volatile uint8_t feedings_per_day = 1;
+static volatile millis_t milliseconds;
+static uint8_t time_sec = 0;
+static uint8_t time_min = 0;
+static uint8_t time_hr = 0;
 
 void LCD_Init(); // Initialize LCD
 void LCD_EnablePulse(); // Enable Pulse, latch data into register
@@ -128,6 +146,9 @@ void play_note_D();
 void play_note_E();
 void play_note_G();
 void feeding_music(); // feeding tune function calling
+void millis_init(void);
+millis_t millis_get(void); // Get milliseconds
+void millis_reset(void); // Reset milliseconds count to 0
 
 int main(void) {
 	// Remove CLKDIV8
@@ -150,6 +171,7 @@ int main(void) {
 	
 	LCD_Init(); // Initialize LCD
 	TimerCounter4_Init(); // Initialize Timer/Counter4
+	millis_init(); // Enable milliseconds timer
 	
 	LCD_ClearDisplay(); // Clear LCD display
 	LCD_GoTo(1, 1);
@@ -157,13 +179,12 @@ int main(void) {
 	
 	HX711_Init(HX711_gain, HX711_scale, HX711_offset); // Initialize HX711
 	
-	
 	LCD_GoTo(2, 1);
 	LCD_DisplayString((uint8_t *)"HX711 init-d");
 	
 	_delay_ms(1000);
 	
-	// first and last buttons are pressed - start calibrate
+	// first and last buttons are pressed down - start calibrate process
 	if ((PINF & (1 << BUTTON_1_PIN)) && (PINE && (1 << BUTTON_4_PIN))) {
 		HX711_calibration_process = 1;
 		
@@ -218,24 +239,11 @@ int main(void) {
 	uint8_t menu_mode = 0;
 	updateMenu(menu_mode);
 
-	uint32_t counter = 0;
-	
-	// uint8_t time_sec = 0;
-	// uint8_t time_min = 0;
-	// uint8_t time_hr = 0;
-	
 	while (1) {
-		counter++;
-		if (counter >= 0x0000FFFF) {
-			if (menu_mode == 0 || menu_mode == MENU_MODE_FOOD_WEIGHT) {
-				updateMenu(menu_mode);
-			}
-			counter = 0;
-		}
-		
-		/*if (millis_get() >= 1000) {
+		if (millis_get() >= 1000) {
 			time_sec += 1;
 			millis_reset();
+			updateMenu(menu_mode);
 		}
 		if (time_sec >= 60) {
 			time_min += 1;
@@ -247,8 +255,8 @@ int main(void) {
 		}
 		if (time_hr >= 24) {
 			time_hr = 0;
-		}*/
-		/*
+		}
+		
 		if (time_min == 0 && time_sec == 0) {
 			switch(feedings_per_day) {
 				case 1: // one feeding per day
@@ -277,12 +285,12 @@ int main(void) {
 					}
 				break;
 			}	
-		}*/
+		}
 		
 		if (isLastButtonPressedDown()) {
 			while(!isLastButtonPressedDown()); // Until not pressed
 			menu_mode++;
-			if (menu_mode > 5) {
+			if (menu_mode > 6) {
 				menu_mode = 0;
 			}
 			updateMenu(menu_mode);
@@ -291,8 +299,8 @@ int main(void) {
 		else if (isFirstButtonPressedDown()) {
 			while(!isFirstButtonPressedDown());
 			menu_mode--;
-			if (menu_mode > 5) {
-				menu_mode = 5;
+			if (menu_mode > 6) {
+				menu_mode = 6;
 			}
 			updateMenu(menu_mode);
 			_delay_ms(500);
@@ -755,6 +763,12 @@ void updateMenu(uint8_t menu_mode) {
 			LCD_DisplayString((uint8_t *)"  (2) - (3) +");	
 		}
 	}
+	else if (menu_mode == MENU_MODE_TIMER) {
+		char buffer[16];
+		sprintf(buffer, "Timer: %02d:%02d:%02d", time_hr, time_min, time_sec);
+		LCD_GoTo(1,1);
+		LCD_DisplayString((uint8_t *)buffer);
+	}
 }
 
 void feeding_cycle() {
@@ -899,4 +913,34 @@ void feeding_music(){
 	play_note_a();
 	_delay_ms(100);
 	play_note_G();
+}
+
+void millis_init() {
+	// Timer settings
+	SET_TCCRA();
+	SET_TCCRB();
+	REG_TIMSK = _BV(BIT_OCIE);
+	REG_OCR = ((F_CPU / PRESCALER) / 1000);
+}
+
+
+millis_t millis_get() { // Get current milliseconds
+	millis_t ms;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+		ms = milliseconds;
+	}
+	return ms;
+}
+
+void millis_reset() { // Reset milliseconds count to 0
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+		milliseconds = 0;
+	}
+}
+
+ISR(ISR_VECT)
+{
+	++milliseconds;
 }
